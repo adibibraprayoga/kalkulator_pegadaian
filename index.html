@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Pendeteksi Harga Gadai Emas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-color: #FFD700;
+            --secondary-color: #D4AF37;
+            --dark-color: #B8860B;
+            --light-color: #FFF8DC;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color), var(--dark-color));
+        }
+        
+        .card {
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            border: none;
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, var(--secondary-color), var(--dark-color));
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            font-weight: bold;
+        }
+        
+        .btn-primary {
+            background-color: var(--secondary-color);
+            border-color: var(--dark-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--dark-color);
+            border-color: var(--secondary-color);
+        }
+        
+        .gold-price-card {
+            background: linear-gradient(135deg, #fffce0, #fff2b3);
+            border-left: 5px solid var(--secondary-color);
+        }
+        
+        .result-card {
+            background: linear-gradient(135deg, #e6f7ff, #b3e0ff);
+            border-left: 5px solid #1890ff;
+        }
+        
+        .calculator-form {
+            background-color: white;
+            padding: 20px;
+            border-radius: 15px;
+        }
+        
+        .gold-icon {
+            color: var(--primary-color);
+            font-size: 24px;
+            margin-right: 10px;
+        }
+        
+        .info-box {
+            background-color: var(--light-color);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        
+        footer {
+            background: linear-gradient(135deg, var(--secondary-color), var(--dark-color));
+            color: white;
+            padding: 20px 0;
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <span class="gold-icon">&#x1F947;</span>
+                Sistem Pegadaian Emas
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#">Beranda</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Kalkulator</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Tentang</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Kontak</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <!-- Kolom utama -->
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Kalkulator Estimasi Gadai Emas</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="calculator-form">
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <div class="info-box">
+                                        <h6>Harga Emas Terkini</h6>
+                                        <div class="d-flex justify-content-between">
+                                            <span>Harga Buyback (24K):</span>
+                                            <strong id="current-gold-price">Rp 1,050,000 /gram</strong>
+                                        </div>
+                                        <small class="text-muted" id="price-update-time">Terakhir update: 20 Nov 2023, 15:30 WIB</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="info-box">
+                                        <h6>Kurs USD/IDR</h6>
+                                        <div class="d-flex justify-content-between">
+                                            <span>Nilai Tukar:</span>
+                                            <strong id="exchange-rate">Rp 15,500 /USD</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <form id="gold-calculator-form">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="goldType" class="form-label">Jenis Emas</label>
+                                        <select class="form-select" id="goldType">
+                                            <option value="jewelry">Perhiasan</option>
+                                            <option value="bar">Emas Batangan</option>
+                                            <option value="certified">Logam Mulia Bersertifikat</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="karat" class="form-label">Kadar Karat</label>
+                                        <select class="form-select" id="karat">
+                                            <option value="24">24K (99.9%)</option>
+                                            <option value="22">22K (91.6%)</option>
+                                            <option value="20">20K (83.3%)</option>
+                                            <option value="18">18K (75.0%)</option>
+                                            <option value="16">16K (66.7%)</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="weight" class="form-label">Berat Emas (gram)</label>
+                                        <input type="number" class="form-control" id="weight" min="0.1" step="0.1" value="10" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="condition" class="form-label">Kondisi Emas</label>
+                                        <select class="form-select" id="condition">
+                                            <option value="1">Baik Sekali</option>
+                                            <option value="0.95">Baik</option>
+                                            <option value="0.9">Cukup</option>
+                                            <option value="0.8">Kurang Baik</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="premium" class="form-label">Premi (%)</label>
+                                    <input type="range" class="form-range" id="premium" min="0" max="20" value="5">
+                                    <div class="d-flex justify-content-between">
+                                        <small>0%</small>
+                                        <small id="premium-value">5%</small>
+                                        <small>20%</small>
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary w-100">Hitung Estimasi</button>
+                            </form>
+                        </div>
+
+                        <!-- Hasil Perhitungan -->
+                        <div class="card mt-4 result-card" id="result-card" style="display: none;">
+                            <div class="card-header">
+                                <h5 class="mb-0">Hasil Perhitungan</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p>Nilai Taksiran Emas:</p>
+                                        <h4 id="estimated-value">Rp 0</h4>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p>Estimasi Nilai Pinjaman (90%):</p>
+                                        <h4 id="loan-value">Rp 0</h4>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <p>Estimasi Biaya Sewa Modal (per bulan):</p>
+                                    <h5 id="service-cost">Rp 0</h5>
+                                </div>
+                                <hr>
+                                <div>
+                                    <p class="mb-1">Detail Perhitungan:</p>
+                                    <ul class="list-group">
+                                        <li class="list-group-item d-flex justify-content-between">
+                                            <span>Harga emas dasar (24K):</span>
+                                            <span id="detail-base-price">Rp 0</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between">
+                                            <span>Penyesuaian kadar karat:</span>
+                                            <span id="detail-karat-adjustment">0%</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between">
+                                            <span>Penyesuaian kondisi:</span>
+                                            <span id="detail-condition-adjustment">0%</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between">
+                                            <span>Premi:</span>
+                                            <span id="detail-premium">0%</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Grafik Harga Emas</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="goldPriceChart" height="250"></canvas>
+                    </div>
+                </div>
+
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Informasi Penting</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-warning">
+                            <h6>Perhatikan!</h6>
+                            <p class="small">Hasil perhitungan ini hanya merupakan estimasi. Nilai sebenarnya dapat berbeda setelah pengecekan fisik oleh petugas pegadaian.</p>
+                        </div>
+                        <ul class="list-group">
+                            <li class="list-group-item">
+                                <strong>Persyaratan Gadai:</strong>
+                                <ul>
+                                    <li>KTP asli dan fotokopi</li>
+                                    <li>Bukti kepemilikan emas</li>
+                                </ul>
+                            </li>
+                            <li class="list-group-item">
+                                <strong>Jangka Waktu:</strong> Maksimal 4 bulan
+                            </li>
+                            <li class="list-group-item">
+                                <strong>Biaya Administrasi:</strong> Rp 25.000 - Rp 50.000
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="text-center mt-5">
+        <div class="container">
+            <p class="mb-0">© 2025 Sistem Pegadaian Emas. Hak Cipta Dilindungi.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const goldPriceElement = document.getElementById('current-gold-price');
+            const priceUpdateTimeElement = document.getElementById('price-update-time');
+
+            // Set harga emas per 21 September 2025
+            const goldPricePerGram = 1200000; // Harga emas dalam IDR per gram
+            goldPriceElement.textContent = `Rp ${goldPricePerGram.toLocaleString('id-ID')} /gram`;
+
+            // Set waktu terakhir update
+            const lastUpdate = '21 Sep 2025, 10:00 WIB';
+            priceUpdateTimeElement.textContent = `Terakhir update: ${lastUpdate}`;
+
+            // Data untuk grafik harga emas
+            const goldPriceData = {
+                labels: ['16 Sep', '17 Sep', '18 Sep', '19 Sep', '20 Sep', '21 Sep'], // Tanggal
+                datasets: [{
+                    label: 'Harga Emas (Rp/gram)',
+                    data: [1180000, 1185000, 1190000, 1195000, 1200000, 1200000], // Harga emas
+                    borderColor: '#FFD700',
+                    backgroundColor: 'rgba(255, 215, 0, 0.2)',
+                    borderWidth: 2,
+                    tension: 0.4, // Membuat garis lebih halus
+                    fill: true
+                }]
+            };
+
+            // Konfigurasi grafik
+            const goldPriceConfig = {
+                type: 'line',
+                data: goldPriceData,
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: 'Perkembangan Harga Emas (16-21 Sep 2025)'
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Tanggal'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Harga (Rp/gram)'
+                            },
+                            beginAtZero: false
+                        }
+                    }
+                }
+            };
+
+            // Render grafik
+            const ctx = document.getElementById('goldPriceChart').getContext('2d');
+            new Chart(ctx, goldPriceConfig);
+
+            // Fungsi untuk menghitung nilai emas
+            function calculateGoldValue() {
+                // Ambil nilai dari form
+                const goldType = document.getElementById('goldType').value;
+                const karat = parseInt(document.getElementById('karat').value);
+                const weight = parseFloat(document.getElementById('weight').value);
+                const condition = parseFloat(document.getElementById('condition').value);
+                const premium = parseInt(document.getElementById('premium').value);
+
+                // Hitung penyesuaian kadar karat
+                const karatPercentage = karat / 24;
+
+                // Hitung harga setelah penyesuaian
+                let adjustedPrice = goldPricePerGram * karatPercentage * condition;
+
+                // Tambahkan premi untuk jenis emas tertentu
+                if (goldType === 'certified') {
+                    adjustedPrice += (adjustedPrice * premium / 100);
+                }
+
+                // Hitung nilai taksiran
+                const estimatedValue = adjustedPrice * weight;
+
+                // Hitung nilai pinjaman (90% dari nilai taksiran)
+                const loanValue = estimatedValue * 0.9;
+
+                // Hitung biaya sewa modal (2% dari nilai pinjaman per bulan)
+                const serviceCost = loanValue * 0.02;
+
+                // Tampilkan hasil
+                document.getElementById('estimated-value').textContent = formatRupiah(estimatedValue);
+                document.getElementById('loan-value').textContent = formatRupiah(loanValue);
+                document.getElementById('service-cost').textContent = formatRupiah(serviceCost);
+
+                // Tampilkan detail perhitungan
+                document.getElementById('detail-base-price').textContent = formatRupiah(goldPricePerGram);
+                document.getElementById('detail-karat-adjustment').textContent = (karatPercentage * 100).toFixed(1) + '%';
+                document.getElementById('detail-condition-adjustment').textContent = (condition * 100).toFixed(0) + '%';
+                document.getElementById('detail-premium').textContent = premium + '%';
+
+                // Tampilkan kartu hasil
+                document.getElementById('result-card').style.display = 'block';
+            }
+
+            // Fungsi untuk format mata uang Rupiah
+            function formatRupiah(amount) {
+                return 'Rp ' + amount.toLocaleString('id-ID');
+            }
+
+            // Event listener untuk form kalkulator
+            document.getElementById('gold-calculator-form').addEventListener('submit', function (e) {
+                e.preventDefault();
+                calculateGoldValue();
+            });
+
+            // Update nilai premi saat slider diubah
+            const premiumSlider = document.getElementById('premium');
+            const premiumValue = document.getElementById('premium-value');
+            premiumSlider.addEventListener('input', function () {
+                premiumValue.textContent = this.value + '%';
+            });
+        });
+    </script>
+</body>
+</html>
